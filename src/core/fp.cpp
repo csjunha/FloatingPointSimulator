@@ -2,6 +2,23 @@
 #include "util.h"
 #include "assert.h"
 
+FP::FP(const FP &other)
+{
+    this->size = other.size;
+    this->exp_size = other.exp_size;
+    this->man_size = other.man_size;
+
+    this->sign = other.sign;
+    this->exp = other.exp;
+
+    this->man = other.man;
+    this->int_offset = other.int_offset;
+    this->frac_offset = other.frac_offset;
+
+    this->bias = other.bias;
+    this->exp_max = other.exp_max;
+}
+
 FP::FP(uint64_t data, offset_t exp_size, offset_t man_size)
 {
     this->size = 1 + exp_size + man_size;
@@ -22,7 +39,8 @@ FP::FP(uint64_t data, offset_t exp_size, offset_t man_size)
 
     this->sign = (data & ((uint64_t)1 << (this->size - 1))) ? true : false;
     this->exp = is_subnormal ? (uman == 0 ? 0 : 1) : exp_bits;
-    this->man = is_inf ? 0 : sign ? -(sman_t)uman : (sman_t)uman;
+    this->man = is_inf ? 0 : sign ? -(sman_t)uman
+                                  : (sman_t)uman;
 
     this->bias = ((exp_t)1 << (exp_size - 1)) - 1;
     this->exp_max = ((exp_t)1 << exp_size) - 1;
@@ -54,28 +72,18 @@ FP::FP(
     this->frac_offset = frac_offset;
 }
 
-void FP::dump()
+uman_t FP::get_uman()
 {
-    printf("=========================\n");
-    printf("Sign: %d\n", this->sign);
-    printf("Exp: %d\n", this->exp);
-    printf("Bias: %d\n", this->bias);
+    return this->sign ? -this->man : this->man;
+}
 
-    this->dump_mantissa();
-
-    printf("Normalized: %s\n", this->is_normalized() ? "true" : "false");
-    printf("Pad bits: %d\n", this->get_padbits_width());
-
-    printf("Int offset: %d\n", this->int_offset);
-    printf("Frac offset: %d\n", this->frac_offset);
-
-    if (this->is_normalized())
-    {
-        dump_bits("Encoded", this->encode(), this->size);
-
-        printf("Float (approx): %.16f\n", this->to_float());
-    }
-    printf("=========================\n");
+bool FP::is_compatible_with(const FP &other) const
+{
+    return (this->size == other.size &&
+            this->exp_size == other.exp_size &&
+            this->man_size == other.man_size &&
+            this->int_offset == other.int_offset &&
+            this->frac_offset == other.frac_offset);
 }
 
 void FP::pad(offset_t padamt)
@@ -87,6 +95,11 @@ void FP::pad(offset_t padamt)
 
 void FP::normalize()
 {
+    if (this->is_normalized())
+    {
+        return;
+    }
+
     if (this->exp >= this->exp_max)
     {
         this->man = 0;
@@ -143,12 +156,13 @@ void FP::round()
     ASSERT(this->int_offset >= this->frac_offset + 2);
     ASSERT(this->frac_offset >= this->man_size - 1);
 
-    offset_t padamt = this->get_padbits_width();
-    if (padamt == 0)
+    if (this->is_rounded())
     {
-        // No need to pad
         return;
     }
+
+    offset_t padamt = this->get_padbits_width();
+    ASSERT(padamt > 0);
 
     offset_t uint_bits = this->int_offset - this->frac_offset - 1;
     uman_t round = this->should_round_up() ? 1 : 0;
@@ -182,7 +196,7 @@ void FP::round()
 
 uint64_t FP::encode()
 {
-    ASSERT(this->is_normalized());
+    ASSERT(this->is_normalized_and_rounded());
 
     if (this->exp >= this->exp_max)
     {
@@ -228,6 +242,31 @@ uint64_t FP::encode()
            get_bitmask_64(this->size - 1, 0);
 }
 
+void FP::dump()
+{
+    printf("=========================\n");
+    printf("Sign: %d\n", this->sign);
+    printf("Exp: %d\n", this->exp);
+    printf("Bias: %d\n", this->bias);
+
+    this->dump_mantissa();
+
+    printf("Normalized: %s\n", this->is_normalized() ? "true" : "false");
+    printf("Rounded: %s\n", this->is_rounded() ? "true" : "false");
+
+    printf("Pad bits: %d\n", this->get_padbits_width());
+
+    printf("Int offset: %d\n", this->int_offset);
+    printf("Frac offset: %d\n", this->frac_offset);
+
+    if (this->is_normalized_and_rounded())
+    {
+        dump_bits("Encoded", this->encode(), this->size);
+        printf("Float (approx): %.16f\n", this->to_float());
+    }
+    printf("=========================\n");
+}
+
 float FP::to_float()
 {
     int32_t exponent = (int32_t)this->exp - (int32_t)this->bias;
@@ -243,6 +282,56 @@ float FP::to_float()
     }
 
     return result * powf32(2.0f, (float)exponent);
+}
+
+FP FP::operator+(const FP &other) const
+{
+    FP this_copy(*this);
+    FP other_copy(other);
+
+    this_copy.normalize();
+    this_copy.round();
+    other_copy.normalize();
+    other_copy.round();
+
+    ASSERT(this_copy.is_compatible_with(other_copy));
+
+    if (this_copy.exp >= this_copy.exp_max || other_copy.exp >= other_copy.exp_max)
+    {
+        // If any of the operands is infinity, return infinity
+        return FP(
+            INF(this_copy.size, 0, this_copy.man_size, this_copy.exp_size),
+            this_copy.exp_size,
+            this_copy.man_size);
+    }
+
+    this_copy.pad(ADD_PAD_WIDTH);
+    other_copy.pad(ADD_PAD_WIDTH);
+
+    offset_t result_int_offset = this_copy.int_offset + 1;
+    offset_t result_frac_offset = this_copy.frac_offset;
+
+    FP *smaller = this_copy.exp < other_copy.exp ? &this_copy : &other_copy;
+    FP *larger = this_copy.exp < other_copy.exp ? &other_copy : &this_copy;
+
+    exp_t exp_max = larger->exp;
+    exp_t shamt = larger->exp - smaller->exp;
+
+    sman_t smaller_sman = smaller->man >> shamt;
+    sman_t sman_sum = larger->man + smaller_sman;
+
+    FP result(
+        this_copy.exp_size,
+        this_copy.man_size,
+        sman_sum,
+        exp_max,
+        result_int_offset,
+        result_frac_offset);
+
+    result.normalize();
+    result.round();
+
+    return result;
 }
 
 bool FP::should_round_up()
@@ -271,11 +360,6 @@ bool FP::should_round_up()
 offset_t FP::get_padbits_width()
 {
     return this->frac_offset - this->man_size + 1;
-}
-
-uman_t FP::get_uman()
-{
-    return this->sign ? -this->man : this->man;
 }
 
 offset_t FP::get_upnorm_shamt()
@@ -339,7 +423,17 @@ bool FP::is_sman_out_of_range()
 
 inline bool FP::is_normalized()
 {
-    return this->int_offset == this->man_size + 1 && this->frac_offset == this->man_size - 1;
+    return this->int_offset - this->frac_offset == 2;
+}
+
+inline bool FP::is_rounded()
+{
+    return this->get_padbits_width() == 0;
+}
+
+inline bool FP::is_normalized_and_rounded()
+{
+    return this->is_normalized() && this->is_rounded();
 }
 
 inline void FP::normalize_offsets()

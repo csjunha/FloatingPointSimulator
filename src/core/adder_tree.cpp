@@ -16,27 +16,21 @@ FP add_all(FP *fps, uint32_t vector_size)
 {
     // Assertion
     for (uint32_t i = 1; i < vector_size; i++)
-    {
-        ASSERT(fps[i].size == fps[0].size);
-        ASSERT(fps[i].man_size == fps[0].man_size);
-        ASSERT(fps[i].exp_size == fps[0].exp_size);
-        ASSERT(fps[i].int_offset == fps[0].int_offset);
-        ASSERT(fps[i].frac_offset == fps[0].frac_offset);
-    }
+        ASSERT(fps[0].is_compatible_with(fps[i]));
 
-    int64_t sman_acc = 0;
-    uint32_t max_exp = find_max_exp(fps, vector_size);
+    sman_t sman_acc = 0;
+    exp_t max_exp = find_max_exp(fps, vector_size);
 
-    uint8_t vector_size_clog2 = clog2(vector_size);
-    uint8_t result_int_offset = fps[0].int_offset + vector_size_clog2;
-    uint8_t result_frac_offset = fps[0].frac_offset;
+    offset_t vector_size_clog2 = clog2(vector_size);
+    offset_t result_int_offset = fps[0].int_offset + vector_size_clog2;
+    offset_t result_frac_offset = fps[0].frac_offset;
 
     // 1. Pre-normalize
     for (uint32_t i = 0; i < vector_size; i++)
     {
         FP current = fps[i];
-        uint32_t shamt = max_exp - current.exp;
-        int64_t sman = current.man >> shamt;
+        exp_t shamt = max_exp - current.exp;
+        sman_t sman = current.man >> shamt;
         sman_acc += sman;
     }
 

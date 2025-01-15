@@ -10,8 +10,8 @@
 FP mult(
     FP a,
     FP b,
-    uint8_t result_exp_size,
-    uint8_t result_man_size,
-    uint8_t result_padamt);
+    offset_t result_exp_size,
+    offset_t result_man_size,
+    offset_t result_padamt);
 
 #endif // __MULT_H__

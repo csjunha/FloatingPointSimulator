@@ -4,17 +4,17 @@
 #include <cstdint>
 #include <cmath>
 
+#include "assert.h"
+#include "../config/config.h"
 
 #define INF(size, sign, man_size, exp_size) \
     ((uint64_t)(sign) << (size - 1)) |      \
         ((uint64_t)((1 << exp_size) - 1) << (man_size))
 
-
-typedef     uint8_t         offset_t;
-typedef     uint32_t        exp_t;
-typedef     int64_t         sman_t;
-typedef     uint64_t        uman_t;
-
+typedef uint8_t offset_t;
+typedef uint32_t exp_t;
+typedef int64_t sman_t;
+typedef uint64_t uman_t;
 
 class FP
 {
@@ -30,6 +30,7 @@ public:
     offset_t int_offset;  // FP[int_offset:frac_offset) is the integer part
     offset_t frac_offset; // FP[frac_offset:0] is the fractional part
 
+    FP(const FP &other);
     FP(uint64_t data, offset_t exp_size, offset_t man_size);
 
     // Internal constructor
@@ -41,16 +42,18 @@ public:
         offset_t int_offset,
         offset_t frac_offset);
 
-    void dump();
-
-    void pad(uint8_t padamt);
+    uman_t get_uman();
+    bool is_compatible_with(const FP &other) const;
+    void pad(offset_t padamt);
     void normalize();
     void round();
     uint64_t encode();
+    void dump();
 
     float to_float();
 
-    uman_t get_uman();
+    // Operators
+    FP operator+(const FP &other) const;
 
 private:
     exp_t bias;
@@ -63,6 +66,9 @@ private:
     bool is_sman_out_of_range();
 
     inline bool is_normalized();
+    inline bool is_rounded();
+    inline bool is_normalized_and_rounded();
+
     inline void normalize_offsets();
 
     void dump_mantissa();

@@ -29,13 +29,13 @@ int main()
 
     // result.dump();
 
-    uint16_t data_a = 0x40A8;
-    uint16_t data_b = 0xC0A8;
+    uint32_t data_a = 0x40490fdb;
+    uint32_t data_b = 0x40490fdb;
 
-    FP a(data_a, INPUT_EXP_WIDTH, INPUT_MAN_WIDTH);
-    FP b(data_b, INPUT_EXP_WIDTH, INPUT_MAN_WIDTH);
+    FP a(data_a, 8, 23);
+    FP b(data_b, 8, 23);
 
-    FP result = mult(a, b, RESULT_EXP_WIDTH, RESULT_MAN_WIDTH, ADDER_TREE_PAD_WIDTH);
+    FP result = a + b;
 
     result.normalize();
     result.round();
