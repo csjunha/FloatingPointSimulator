@@ -4,34 +4,42 @@
 #include <cstdint>
 #include <cmath>
 
-#define INF(size, sign, man_size, exp_size)      \
-    ((uint64_t)(sign) << (size - 1)) | \
+
+#define INF(size, sign, man_size, exp_size) \
+    ((uint64_t)(sign) << (size - 1)) |      \
         ((uint64_t)((1 << exp_size) - 1) << (man_size))
+
+
+typedef     uint8_t         offset_t;
+typedef     uint32_t        exp_t;
+typedef     int64_t         sman_t;
+typedef     uint64_t        uman_t;
+
 
 class FP
 {
 public:
-    uint16_t size;
-    uint8_t exp_size;
-    uint8_t man_size;
+    offset_t size;
+    offset_t exp_size;
+    offset_t man_size;
 
     bool sign;
-    uint32_t exp;
+    exp_t exp;
 
-    int64_t man;
-    uint8_t int_offset;  // FP[int_offset:frac_offset) is the integer part
-    uint8_t frac_offset; // FP[frac_offset:0] is the fractional part
+    sman_t man;
+    offset_t int_offset;  // FP[int_offset:frac_offset) is the integer part
+    offset_t frac_offset; // FP[frac_offset:0] is the fractional part
 
-    FP(uint64_t data, uint8_t exp_size, uint8_t man_size);
+    FP(uint64_t data, offset_t exp_size, offset_t man_size);
 
     // Internal constructor
     FP(
-        uint8_t exp_size,
-        uint8_t man_size,
-        uint64_t sman,
-        uint32_t exp,
-        uint8_t int_offset,
-        uint8_t frac_offset);
+        offset_t exp_size,
+        offset_t man_size,
+        sman_t sman,
+        exp_t exp,
+        offset_t int_offset,
+        offset_t frac_offset);
 
     void dump();
 
@@ -42,16 +50,16 @@ public:
 
     float to_float();
 
+    uman_t get_uman();
+
 private:
-    uint32_t bias;
-    uint32_t exp_max;
+    exp_t bias;
+    exp_t exp_max;
 
-    uint64_t get_uman();
-    uint8_t get_padbits_width();
-
+    offset_t get_padbits_width();
     bool should_round_up();
-    uint32_t get_upnorm_shamt();
-    uint32_t get_downnorm_shamt();
+    offset_t get_upnorm_shamt();
+    offset_t get_downnorm_shamt();
     bool is_sman_out_of_range();
 
     inline bool is_normalized();

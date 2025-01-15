@@ -2,44 +2,42 @@
 #include "util.h"
 #include "assert.h"
 
-FP::FP(uint64_t data, uint8_t exp_size, uint8_t man_size)
+FP::FP(uint64_t data, offset_t exp_size, offset_t man_size)
 {
     this->size = 1 + exp_size + man_size;
     this->exp_size = exp_size;
     this->man_size = man_size;
 
-    uint64_t exp_mask = get_bitmask_64((uint32_t)(this->size - 2), (uint32_t)man_size);
-    uint64_t man_mask = get_bitmask_64((uint32_t)(man_size - 1), 0);
+    uint64_t exp_mask = get_bitmask_64(this->size - 2, man_size);
+    uint64_t man_mask = get_bitmask_64(man_size - 1, 0);
 
-    uint32_t exp_bits = (uint32_t)((data & exp_mask) >> man_size);
-    uint64_t man_bits = data & man_mask;
+    exp_t exp_bits = (exp_t)((data & exp_mask) >> man_size);
+    uman_t man_bits = data & man_mask;
 
     bool is_subnormal = (exp_bits == 0);
-    bool is_inf = (exp_bits == ((uint32_t)1 << exp_size) - 1);
+    bool is_inf = (exp_bits == ((exp_t)1 << exp_size) - 1);
 
     // unsigned mantissa
-    int64_t uman = is_subnormal ? (int64_t)man_bits
-                                : ((int64_t)(1 << man_size) | (int64_t)man_bits);
+    uman_t uman = is_subnormal ? man_bits : (((uman_t)1 << man_size) | man_bits);
 
-    this->sign = (data & ((uint64_t)1 << (this->size - 1))) ? 1 : 0;
+    this->sign = (data & ((uint64_t)1 << (this->size - 1))) ? true : false;
     this->exp = is_subnormal ? (uman == 0 ? 0 : 1) : exp_bits;
-    this->man = is_inf ? 0 : sign ? -uman
-                                  : uman;
+    this->man = is_inf ? 0 : sign ? -(sman_t)uman : (sman_t)uman;
 
-    this->bias = ((uint32_t)1 << (exp_size - 1)) - 1;
-    this->exp_max = ((uint32_t)1 << exp_size) - 1;
+    this->bias = ((exp_t)1 << (exp_size - 1)) - 1;
+    this->exp_max = ((exp_t)1 << exp_size) - 1;
 
     this->int_offset = man_size + 1;
     this->frac_offset = man_size - 1;
 }
 
 FP::FP(
-    uint8_t exp_size,
-    uint8_t man_size,
-    uint64_t sman,
-    uint32_t exp,
-    uint8_t int_offset,
-    uint8_t frac_offset)
+    offset_t exp_size,
+    offset_t man_size,
+    sman_t sman,
+    exp_t exp,
+    offset_t int_offset,
+    offset_t frac_offset)
 {
     this->size = 1 + exp_size + man_size;
     this->exp_size = exp_size;
@@ -49,8 +47,8 @@ FP::FP(
     this->man = sman;
     this->exp = exp;
 
-    this->bias = ((uint32_t)1 << (exp_size - 1)) - 1;
-    this->exp_max = ((uint32_t)1 << exp_size) - 1;
+    this->bias = ((exp_t)1 << (exp_size - 1)) - 1;
+    this->exp_max = ((exp_t)1 << exp_size) - 1;
 
     this->int_offset = int_offset;
     this->frac_offset = frac_offset;
@@ -73,13 +71,14 @@ void FP::dump()
 
     if (this->is_normalized())
     {
-        printf("Encoded: ");
-        dump_bits(this->encode(), this->size);
+        dump_bits("Encoded", this->encode(), this->size);
+
+        printf("Float (approx): %.16f\n", this->to_float());
     }
     printf("=========================\n");
 }
 
-void FP::pad(uint8_t padamt)
+void FP::pad(offset_t padamt)
 {
     this->int_offset += padamt;
     this->frac_offset += padamt;
@@ -114,8 +113,8 @@ void FP::normalize()
         }
     }
 
-    uint32_t upnorm_shamt = this->get_upnorm_shamt();
-    uint32_t downnorm_shamt = this->get_downnorm_shamt();
+    exp_t upnorm_shamt = this->get_upnorm_shamt();
+    exp_t downnorm_shamt = this->get_downnorm_shamt();
 
     if (upnorm_shamt)
     {
@@ -144,24 +143,24 @@ void FP::round()
     ASSERT(this->int_offset >= this->frac_offset + 2);
     ASSERT(this->frac_offset >= this->man_size - 1);
 
-    uint32_t padamt = this->get_padbits_width();
+    offset_t padamt = this->get_padbits_width();
     if (padamt == 0)
     {
         // No need to pad
         return;
     }
 
-    uint8_t uint_bits = this->int_offset - this->frac_offset - 1;
-    uint64_t round = this->should_round_up() ? 1 : 0;
+    offset_t uint_bits = this->int_offset - this->frac_offset - 1;
+    uman_t round = this->should_round_up() ? 1 : 0;
 
-    uint64_t uman = this->get_uman();
-    uint64_t actual_uman = (uman & get_bitmask_64(this->int_offset - 1, padamt)) >> padamt;
-    uint64_t actual_uman_round = actual_uman + round;
+    uman_t uman = this->get_uman();
+    uman_t actual_uman = (uman & get_bitmask_64(this->int_offset - 1, padamt)) >> padamt;
+    uman_t actual_uman_round = actual_uman + round;
 
     // Should we re-upnormalize?
     bool carry = (actual_uman_round & (1 << (uint_bits + this->man_size))) ? true : false;
-    int64_t uman_round = carry ? actual_uman_round >> 1 : actual_uman_round;
-    int64_t sman_round = this->sign ? -uman_round : uman_round;
+    uman_t uman_round = carry ? actual_uman_round >> 1 : actual_uman_round;
+    sman_t sman_round = this->sign ? -(sman_t)uman_round : (sman_t)uman_round;
 
     if (carry)
     {
@@ -205,19 +204,19 @@ uint64_t FP::encode()
         }
     }
 
-    uint64_t uman = this->get_uman();
-    uint8_t uman_high = this->int_offset - 1;
+    uman_t uman = this->get_uman();
+    offset_t uman_high = this->int_offset - 1;
 
     if (this->exp == 0)
     {
         // In this case, we cannot represent it as IEEE754 floating point number
         // We should add 1 to the exponent and shift the mantissa to the right
-        uint64_t uman_lsb = uman & (uint64_t)1;
-        uint64_t uman_remainder = (uman & get_bitmask_64(uman_high, 1)) >> 1;
+        uman_t uman_lsb = uman & (uint64_t)1;
+        uman_t uman_remainder = (uman & get_bitmask_64(uman_high, 1)) >> 1;
         uman = uman_remainder + uman_lsb;
     }
 
-    bool uman_msb = uman & ((uint64_t)1 << uman_high) ? true : false;
+    bool uman_msb = uman & ((uman_t)1 << uman_high) ? true : false;
     ASSERT(!uman_msb ? this->exp == 0 : true); // If uman_msb is not set, exp should be 0 to conform subnormal number
 
     uint64_t mantissa = uman & get_bitmask_64(uman_high - 1, 0);
@@ -253,43 +252,43 @@ bool FP::should_round_up()
         return false;
     }
 
-    uint8_t padamt = this->get_padbits_width();
-    uint64_t uman = this->get_uman();
+    offset_t padamt = this->get_padbits_width();
+    uman_t uman = this->get_uman();
 
-    uint64_t msb_padbits = uman & ((uint64_t)1 << (padamt - 1));
+    uman_t msb_padbits = uman & ((uman_t)1 << (padamt - 1));
     if (padamt == 1)
     {
         return msb_padbits ? true : false;
     }
 
-    uint64_t last_bit_before_pad = uman & ((uint64_t)1 << padamt);
-    uint64_t remainder = uman & (((uint64_t)1 << (padamt - 1)) - 1);
+    uman_t last_bit_before_pad = uman & ((uman_t)1 << padamt);
+    uman_t remainder = uman & (((uman_t)1 << (padamt - 1)) - 1);
 
     return last_bit_before_pad ? (msb_padbits ? true : false)
                                : (msb_padbits ? true : false) && (remainder != 0);
 }
 
-uint8_t FP::get_padbits_width()
+offset_t FP::get_padbits_width()
 {
     return this->frac_offset - this->man_size + 1;
 }
 
-uint64_t FP::get_uman()
+uman_t FP::get_uman()
 {
     return this->sign ? -this->man : this->man;
 }
 
-uint32_t FP::get_upnorm_shamt()
+offset_t FP::get_upnorm_shamt()
 {
-    uint32_t shamt = 0;
-    uint64_t uman = this->get_uman();
+    offset_t shamt = 0;
+    uman_t uman = this->get_uman();
 
-    uint32_t high = this->int_offset - 1;
-    uint32_t low = this->frac_offset + 1;
+    offset_t high = this->int_offset - 1;
+    offset_t low = this->frac_offset + 1;
 
-    for (uint32_t i = high; i >= low; --i)
+    for (int i = (int)high; i >= (int)low; --i)
     {
-        uint64_t mask = (uint64_t)1 << i;
+        uman_t mask = (uman_t)1 << i;
         if (uman & mask)
         {
             shamt = i - low;
@@ -300,17 +299,17 @@ uint32_t FP::get_upnorm_shamt()
     return shamt;
 }
 
-uint32_t FP::get_downnorm_shamt()
+offset_t FP::get_downnorm_shamt()
 {
-    uint32_t lz = 0;
-    uint64_t uman = this->get_uman();
+    offset_t lz = 0;
+    uman_t uman = this->get_uman();
 
-    uint32_t high = this->frac_offset + 1;
-    uint32_t low = 0;
+    offset_t high = this->frac_offset + 1;
+    offset_t low = 0;
 
-    for (uint32_t i = high; i >= low; --i)
+    for (int i = (int)high; i >= (int)low; --i)
     {
-        uint64_t mask = (uint64_t)1 << i;
+        uman_t mask = (uman_t)1 << i;
         if (uman & mask)
         {
             lz = high - i;
@@ -328,8 +327,8 @@ uint32_t FP::get_downnorm_shamt()
 //
 bool FP::is_sman_out_of_range()
 {
-    uint64_t msb_mask = (uint64_t)1 << (this->int_offset);
-    uint64_t remainder_mask = msb_mask - 1;
+    uman_t msb_mask = (uman_t)1 << (this->int_offset);
+    uman_t remainder_mask = msb_mask - 1;
 
     if ((this->man & msb_mask) && !(this->man & remainder_mask))
     {
@@ -351,13 +350,13 @@ inline void FP::normalize_offsets()
 
 void FP::dump_mantissa()
 {
-    uint8_t padbits_width = this->get_padbits_width();
+    offset_t padbits_width = this->get_padbits_width();
 
     printf("Mantissa (signed): ");
-    uint8_t sman_high = this->int_offset;
+    offset_t sman_high = this->int_offset;
     for (int i = sman_high; i >= 0; --i)
     {
-        bool on = (this->man & (uint64_t)1 << i) ? true : false;
+        bool on = (this->man & (uman_t)1 << i) ? true : false;
         printf("%d", on ? 1 : 0);
         if (i == this->frac_offset + 1)
         {
@@ -371,11 +370,11 @@ void FP::dump_mantissa()
     printf("\n");
 
     printf("Mantissa (unsigned): ");
-    uint8_t uman_high = this->int_offset - 1;
-    uint64_t uman = this->get_uman();
+    offset_t uman_high = this->int_offset - 1;
+    uman_t uman = this->get_uman();
     for (int i = uman_high; i >= 0; --i)
     {
-        bool on = (uman & (uint64_t)1 << i) ? true : false;
+        bool on = (uman & (uman_t)1 << i) ? true : false;
         printf("%d", on ? 1 : 0);
         if (i == this->frac_offset + 1)
         {
