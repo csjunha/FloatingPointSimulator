@@ -2,6 +2,7 @@
 #define __FP_H__
 
 #include <cstdint>
+#include <cmath>
 
 #define INF(size, sign, man_size, exp_size)      \
     ((uint64_t)(sign) << (size - 1)) | \
@@ -38,6 +39,8 @@ public:
     void normalize();
     void round();
     uint64_t encode();
+
+    float to_float();
 
 private:
     uint32_t bias;

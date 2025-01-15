@@ -58,6 +58,7 @@ FP::FP(
 
 void FP::dump()
 {
+    printf("=========================\n");
     printf("Sign: %d\n", this->sign);
     printf("Exp: %d\n", this->exp);
     printf("Bias: %d\n", this->bias);
@@ -75,6 +76,7 @@ void FP::dump()
         printf("Encoded: ");
         dump_bits(this->encode(), this->size);
     }
+    printf("=========================\n");
 }
 
 void FP::pad(uint8_t padamt)
@@ -187,7 +189,6 @@ uint64_t FP::encode()
     {
         return INF(this->size, this->sign, this->man_size, this->exp_size);
     }
-
     if (this->man == 0)
     {
         return 0;
@@ -195,14 +196,13 @@ uint64_t FP::encode()
 
     if (this->is_sman_out_of_range())
     {
-        bool inf = this->exp + 1 >= this->exp_max;
-        if (inf)
-        {
-            return INF(this->size, this->sign, this->man_size, this->exp_size);
-        }
-
         this->exp += 1;
         this->man >>= 1;
+        if (this->exp >= this->exp_max)
+        {
+            this->man = 0;
+            return INF(this->size, this->sign, this->man_size, this->exp_size);
+        }
     }
 
     uint64_t uman = this->get_uman();
@@ -227,6 +227,23 @@ uint64_t FP::encode()
             (exp << this->man_size) |
             mantissa) &
            get_bitmask_64(this->size - 1, 0);
+}
+
+float FP::to_float()
+{
+    int32_t exponent = (int32_t)this->exp - (int32_t)this->bias;
+
+    float result = 0.0f;
+    float coeff = powf32(2.0f, (float)(this->int_offset - this->frac_offset - 1));
+    for (int i = this->int_offset; i >= 0; i--)
+    {
+        uint64_t mask = (uint64_t)1 << i;
+        bool on = this->man & mask ? true : false;
+        result += on ? i == this->int_offset ? -coeff : coeff : 0.0f;
+        coeff /= 2.0f;
+    }
+
+    return result * powf32(2.0f, (float)exponent);
 }
 
 bool FP::should_round_up()

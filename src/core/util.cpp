@@ -9,11 +9,11 @@ uint64_t get_bitmask_64(uint32_t high, uint32_t low)
     return (((uint64_t)1 << size) - 1) << low;
 }
 
-float gen_random_float32() {
+float gen_random_float32(float range_from, float range_to) {
     std::random_device rd;
     std::mt19937 generator(rd());
 
-    std::uniform_real_distribution<float> distribution(0.0f, 1.0f);
+    std::uniform_real_distribution<float> distribution(range_from, range_to);
     return distribution(generator);
 }
 

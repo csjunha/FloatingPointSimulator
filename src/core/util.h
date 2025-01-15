@@ -10,7 +10,7 @@
 
 uint64_t get_bitmask_64(uint32_t begin, uint32_t end);
 
-float gen_random_float32();
+float gen_random_float32(float range_from, float range_to);
 
 uint8_t clog2(uint64_t num);
 

@@ -28,7 +28,7 @@ FP add_all(FP *fps, uint32_t vector_size)
     uint32_t max_exp = find_max_exp(fps, vector_size);
 
     uint8_t vector_clog2 = clog2(vector_size);
-    uint8_t result_int_offset = fps[0].int_offset + vector_clog2;
+    uint8_t result_int_offset = fps[0].int_offset + ADDER_TREE_PAD_WIDTH + vector_clog2;
     uint8_t result_frac_offset = fps[0].frac_offset + ADDER_TREE_PAD_WIDTH;
 
     // 1. Pre-normalize
