@@ -48,11 +48,13 @@ public:
     void normalize();
     void round();
     uint64_t encode();
-    void dump();
+
+    void dump(const char *tag);
 
     float to_float();
 
     // Operators
+    FP& operator=(const FP &other);
     FP operator+(const FP &other) const;
 
 private:

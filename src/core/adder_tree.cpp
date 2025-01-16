@@ -12,7 +12,7 @@ uint32_t find_max_exp(FP *fps, uint32_t vector_size)
     return max;
 }
 
-FP add_all(FP *fps, uint32_t vector_size)
+FP adder_tree(FP *fps, uint32_t vector_size)
 {
     // Assertion
     for (uint32_t i = 1; i < vector_size; i++)

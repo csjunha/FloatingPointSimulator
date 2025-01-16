@@ -242,9 +242,9 @@ uint64_t FP::encode()
            get_bitmask_64(this->size - 1, 0);
 }
 
-void FP::dump()
+void FP::dump(const char *tag)
 {
-    printf("=========================\n");
+    printf("============= Start of %s =============\n\n", tag);
     printf("Sign: %d\n", this->sign);
     printf("Exp: %d\n", this->exp);
     printf("Bias: %d\n", this->bias);
@@ -264,7 +264,8 @@ void FP::dump()
         dump_bits("Encoded", this->encode(), this->size);
         printf("Float (approx): %.16f\n", this->to_float());
     }
-    printf("=========================\n");
+    printf("\n");
+    printf("============= End of %s =============\n\n", tag);
 }
 
 float FP::to_float()
@@ -282,6 +283,25 @@ float FP::to_float()
     }
 
     return result * powf32(2.0f, (float)exponent);
+}
+
+FP &FP::operator=(const FP &other)
+{
+    this->size = other.size;
+    this->exp_size = other.exp_size;
+    this->man_size = other.man_size;
+
+    this->sign = other.sign;
+    this->exp = other.exp;
+
+    this->man = other.man;
+    this->int_offset = other.int_offset;
+    this->frac_offset = other.frac_offset;
+
+    this->bias = other.bias;
+    this->exp_max = other.exp_max;
+
+    return *this;
 }
 
 FP FP::operator+(const FP &other) const

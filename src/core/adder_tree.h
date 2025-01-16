@@ -5,6 +5,6 @@
 #include "./assert.h"
 #include "./util.h"
 
-FP add_all(FP *fps, uint32_t vector_size);
+FP adder_tree(FP *fps, uint32_t vector_size);
 
 #endif // __ADDER_TREE_H__
