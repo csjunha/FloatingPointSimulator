@@ -1,4 +1,3 @@
-#include "../config/config.h"
 #include "./adder_tree.h"
 
 uint32_t find_max_exp(FP *fps, uint32_t vector_size)
@@ -16,7 +15,7 @@ FP adder_tree(FP *fps, uint32_t vector_size)
 {
     // Assertion
     for (uint32_t i = 1; i < vector_size; i++)
-        ASSERT(fps[0].is_compatible_with(fps[i]));
+        assert(fps[0].is_compatible_with(fps[i]));
 
     sman_t sman_acc = 0;
     exp_t max_exp = find_max_exp(fps, vector_size);

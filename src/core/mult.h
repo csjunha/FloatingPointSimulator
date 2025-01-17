@@ -2,10 +2,10 @@
 #define __MULT_H__
 
 #include <cstdint>
+#include <assert.h>
 
 #include "./fp.h"
 #include "./util.h"
-#include "./assert.h"
 
 FP mult(
     FP a,

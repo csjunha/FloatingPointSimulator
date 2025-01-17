@@ -7,7 +7,7 @@ FP mult(
     offset_t result_man_size,
     offset_t result_padamt)
 {
-    ASSERT(a.is_compatible_with(b));
+    assert(a.is_compatible_with(b));
 
     exp_t operand_bias = (1 << (a.exp_size - 1)) - 1;
 

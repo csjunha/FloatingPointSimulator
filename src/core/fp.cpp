@@ -1,6 +1,4 @@
 #include "fp.h"
-#include "util.h"
-#include "assert.h"
 
 FP::FP(const FP &other)
 {
@@ -153,8 +151,8 @@ void FP::normalize()
 
 void FP::round()
 {
-    ASSERT(this->int_offset >= this->frac_offset + 2);
-    ASSERT(this->frac_offset >= this->man_size - 1);
+    assert(this->int_offset >= this->frac_offset + 2);
+    assert(this->frac_offset >= this->man_size - 1);
 
     if (this->is_rounded())
     {
@@ -162,7 +160,7 @@ void FP::round()
     }
 
     offset_t padamt = this->get_padbits_width();
-    ASSERT(padamt > 0);
+    assert(padamt > 0);
 
     offset_t uint_bits = this->int_offset - this->frac_offset - 1;
     uman_t round = this->should_round_up() ? 1 : 0;
@@ -196,7 +194,7 @@ void FP::round()
 
 uint64_t FP::encode()
 {
-    ASSERT(this->is_normalized_and_rounded());
+    assert(this->is_normalized_and_rounded());
 
     if (this->exp >= this->exp_max)
     {
@@ -231,7 +229,7 @@ uint64_t FP::encode()
     }
 
     bool uman_msb = uman & ((uman_t)1 << uman_high) ? true : false;
-    ASSERT(!uman_msb ? this->exp == 0 : true); // If uman_msb is not set, exp should be 0 to conform subnormal number
+    assert(!uman_msb ? this->exp == 0 : true); // If uman_msb is not set, exp should be 0 to conform subnormal number
 
     uint64_t mantissa = uman & get_bitmask_64(uman_high - 1, 0);
     uint64_t exp = this->exp == 0 ? uman_msb ? 1 : 0 : this->exp;
@@ -306,6 +304,8 @@ FP &FP::operator=(const FP &other)
 
 FP FP::operator+(const FP &other) const
 {
+    GlobalConfig &config = GlobalConfig::get_instance();
+
     FP this_copy(*this);
     FP other_copy(other);
 
@@ -314,7 +314,7 @@ FP FP::operator+(const FP &other) const
     other_copy.normalize();
     other_copy.round();
 
-    ASSERT(this_copy.is_compatible_with(other_copy));
+    assert(this_copy.is_compatible_with(other_copy));
 
     if (this_copy.exp >= this_copy.exp_max || other_copy.exp >= other_copy.exp_max)
     {
@@ -325,8 +325,8 @@ FP FP::operator+(const FP &other) const
             this_copy.man_size);
     }
 
-    this_copy.pad(ADD_PAD_WIDTH);
-    other_copy.pad(ADD_PAD_WIDTH);
+    this_copy.pad(config.get_add_pad_width());
+    other_copy.pad(config.get_add_pad_width());
 
     offset_t result_int_offset = this_copy.int_offset + 1;
     offset_t result_frac_offset = this_copy.frac_offset;

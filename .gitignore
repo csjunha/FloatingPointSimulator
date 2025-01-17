@@ -1,5 +1,7 @@
 .vscode
 .DS_Store
 
-**/build/**
-src/sim
+src/build
+src/build/**
+src/bin
+src/bin/**

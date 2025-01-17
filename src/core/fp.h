@@ -3,18 +3,15 @@
 
 #include <cstdint>
 #include <cmath>
+#include <assert.h>
 
-#include "assert.h"
-#include "../config/config.h"
+#include "./types.h"
+#include "./global_config.h"
+#include "./util.h"
 
 #define INF(size, sign, man_size, exp_size) \
     ((uint64_t)(sign) << (size - 1)) |      \
         ((uint64_t)((1 << exp_size) - 1) << (man_size))
-
-typedef uint8_t offset_t;
-typedef uint32_t exp_t;
-typedef int64_t sman_t;
-typedef uint64_t uman_t;
 
 class FP
 {

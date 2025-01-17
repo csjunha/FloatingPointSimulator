@@ -4,11 +4,11 @@
 #include "./fp.h"
 #include "./mult.h"
 #include "./adder_tree.h"
+#include "./global_config.h"
 
 FP inner_product(
     FP *vector_a,
     FP *vector_b,
-    uint32_t vector_size,
     offset_t result_exp_size,
     offset_t result_man_width);
 
