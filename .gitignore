@@ -5,3 +5,6 @@ src/build
 src/build/**
 src/bin
 src/bin/**
+
+data/
+data/**

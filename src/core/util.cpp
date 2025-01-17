@@ -109,8 +109,12 @@ uint8_t get_leading_zero_count(uint64_t data, uint8_t start, uint8_t end)
 
 uint8_t clog2(uint64_t num)
 {
+    if (num <= 1)
+        return 0;
+
+    --num;
     uint8_t count = 0;
-    while (num)
+    while (num > 0)
     {
         num >>= 1;
         count++;

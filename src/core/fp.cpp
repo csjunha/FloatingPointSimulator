@@ -101,6 +101,7 @@ void FP::normalize()
     if (this->exp >= this->exp_max)
     {
         this->man = 0;
+        this->exp = this->exp_max;
         this->normalize_offsets();
         return;
     }
@@ -458,8 +459,7 @@ inline bool FP::is_normalized_and_rounded()
 
 inline void FP::normalize_offsets()
 {
-    this->int_offset = this->man_size + 1;
-    this->frac_offset = this->man_size - 1;
+    this->int_offset = this->frac_offset + 2;
 }
 
 void FP::dump_mantissa()
