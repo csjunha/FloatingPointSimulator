@@ -12,6 +12,7 @@
 #include "./core/adder_tree.h"
 #include "./core/mult.h"
 #include "./core/ipu.h"
+#include "./core/accumulator.h"
 #include "./core/util.h"
 
 #include "./core/global_config.h"
@@ -167,7 +168,8 @@ int main(int argc, char *argv[])
 
     config.dump();
 
-    std::cout << "\nReading and parsing input files...\n" << std::endl;
+    std::cout << "\nReading and parsing input files...\n"
+              << std::endl;
 
     FP **vectors_a = read_and_parse_input_file(input_operand_file_a);
     if (!vectors_a)
@@ -182,33 +184,27 @@ int main(int argc, char *argv[])
         return 1;
     }
 
-    std::cout << "\nProcessing inner product...\n" << std::endl;
+    std::cout << "\nProcessing inner product...\n"
+              << std::endl;
 
     offset_t result_exp_size = config.get_result_exp_width();
     offset_t result_man_size = config.get_result_man_width();
 
-    FP accum(0, result_exp_size, result_man_size);
-
+    Accumulator accumulator(result_exp_size, result_man_size);
     FileWriter writer(output_file);
 
-    // float accum_fp32 = 0;
     for (uint32_t i = 0; i < config.get_num_vectors(); i++)
     {
-        // for (uint32_t j = 0; j < config.get_vector_size(); j++)
-        // {
-        //     float a = vectors_a[i][j].to_float();
-        //     float b = vectors_b[i][j].to_float();
-        //     accum_fp32 += a * b;
-        // }
-
         FP result = inner_product(
             vectors_a[i],
             vectors_b[i],
             result_exp_size,
             result_man_size);
 
-        accum = accum + result;
-        writer.write_as_binary(accum.encode(), accum.size);
+        accumulator.accumulate(result);
+
+        FP acc = accumulator.get_result();
+        writer.write_as_binary(acc.encode(), acc.size);
     }
 
     std::cout << "\nDone!\n" << std::endl;

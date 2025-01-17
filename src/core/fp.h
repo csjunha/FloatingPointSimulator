@@ -27,6 +27,9 @@ public:
     offset_t int_offset;  // FP[int_offset:frac_offset) is the integer part
     offset_t frac_offset; // FP[frac_offset:0] is the fractional part
 
+    exp_t bias;
+    exp_t exp_max;
+
     FP(const FP &other);
     FP(uint64_t data, offset_t exp_size, offset_t man_size);
 
@@ -46,6 +49,8 @@ public:
     void round();
     uint64_t encode();
 
+    void clear();
+
     void dump(const char *tag);
 
     float to_float();
@@ -55,9 +60,6 @@ public:
     FP operator+(const FP &other) const;
 
 private:
-    exp_t bias;
-    exp_t exp_max;
-
     offset_t get_padbits_width();
     bool should_round_up();
     offset_t get_upnorm_shamt();

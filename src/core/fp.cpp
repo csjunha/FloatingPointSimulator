@@ -241,6 +241,15 @@ uint64_t FP::encode()
            get_bitmask_64(this->size - 1, 0);
 }
 
+void FP::clear()
+{
+    this->sign = false;
+    this->exp = 0;
+    this->man = 0;
+    this->int_offset = this->man_size + 1;
+    this->frac_offset = this->man_size - 1;
+}
+
 void FP::dump(const char *tag)
 {
     printf("============= Start of %s =============\n\n", tag);
@@ -332,8 +341,9 @@ FP FP::operator+(const FP &other) const
     offset_t result_int_offset = this_copy.int_offset + 1;
     offset_t result_frac_offset = this_copy.frac_offset;
 
-    FP *smaller = this_copy.exp < other_copy.exp ? &this_copy : &other_copy;
-    FP *larger = this_copy.exp < other_copy.exp ? &other_copy : &this_copy;
+    bool compare = this_copy.exp < other_copy.exp;
+    FP *smaller = compare ? &this_copy : &other_copy;
+    FP *larger = compare ? &other_copy : &this_copy;
 
     exp_t exp_max = larger->exp;
     exp_t shamt = larger->exp - smaller->exp;

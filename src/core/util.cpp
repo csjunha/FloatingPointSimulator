@@ -154,12 +154,15 @@ void dump_bits(const char *tag, uint64_t data, uint8_t size)
 
 void dump_bits_hex(const char *tag, uint64_t data, uint8_t size)
 {
+    uint64_t masked = data & get_bitmask_64(size - 1, 0);
     uint8_t ceil = ((size + 3) / 4) * 4;
 
-    printf("%s: ", tag);
+    if (tag)
+        printf("%s: ", tag);
+
     for (int i = ceil; i > 0; i -= 4)
     {
-        uint8_t hex = (data >> (i - 4)) & 0xF;
+        uint8_t hex = (masked >> (i - 4)) & 0xF;
         printf("%c", hex_table[hex]);
     }
     printf("\n");
