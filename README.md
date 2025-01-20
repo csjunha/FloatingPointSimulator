@@ -34,4 +34,19 @@ To run the simulator, execute the following command at root:
 
 ### Run generator
 
-TBD
+To generate random input files, execute the following command at root:
+
+```bash
+./src/bin/gen --output-files <output_files> --num-vectors <num_vectors> --vector-size <vector_size> --exp-width <exp_width> --man-width <man_width> --range-from <range_from> --range-to <range_to>
+```
+
+- `<output_files>`: Whitespace-separated list of output file paths. (e.g., `input1.dat input2.dat`)
+- `<num_vectors>`: Number of vectors.
+- `<vector_size>`: Size of each vector.
+
+## Example
+
+```bash
+./src/bin/gen --output-files ../data/operand_a.dat ../data/operand_b.dat --range-from "-0.0001" --range-to "0.0001"
+./src/bin/sim --input-files ../data/operand_a.dat ../data/operand_b.dat --output-file ../data/result.dat
+```

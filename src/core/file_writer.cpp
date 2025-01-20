@@ -25,7 +25,12 @@ void FileWriter::write_line(std::string &line)
     file << line << std::endl;
 }
 
-void FileWriter::write_as_binary(uint64_t num, uint8_t num_bits)
+void FileWriter::write_line(const char *line)
+{
+    file << line << std::endl;
+}
+
+void FileWriter::write_as_binary(uint64_t num, uint8_t num_bits, bool as_line)
 {
     std::string line(num_bits, '0');
 
@@ -35,7 +40,10 @@ void FileWriter::write_as_binary(uint64_t num, uint8_t num_bits)
             line[num_bits - 1 - i] = '1';
     }
 
-    this->write_line(line);
+    if (as_line)
+        this->write_line(line);
+    else
+        file << line;
 }
 
 bool FileWriter::is_open() const

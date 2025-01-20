@@ -22,6 +22,7 @@ void Accumulator::accumulate(const FP &input)
     FP copy(input);
     copy.normalize();
     copy.round();
+
     copy.pad(GlobalConfig::get_instance().get_add_pad_width());
 
     assert(copy.is_compatible_with(*this->acc));

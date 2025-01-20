@@ -1,4 +1,5 @@
 #include "./adder_tree.h"
+#include <stdio.h>
 
 uint32_t find_max_exp(FP *fps, uint32_t vector_size)
 {

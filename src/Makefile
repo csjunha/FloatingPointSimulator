@@ -17,10 +17,12 @@ SIM := sim.cpp
 GEN := gen.cpp
 
 SIM_OBJ := $(BUILD_DIR)/sim.o
+GEN_OBJ := $(BUILD_DIR)/gen.o
 
-TARGET := $(BIN_DIR)/sim
+SIM_EXEC = $(BIN_DIR)/sim
+GEN_EXEC = $(BIN_DIR)/gen
 
-all: $(TARGET)
+all: $(SIM_EXEC) $(GEN_EXEC)
 
 $(BUILD_DIR):
 	@mkdir -p $@
@@ -28,10 +30,16 @@ $(BUILD_DIR):
 $(BIN_DIR):
 	@mkdir -p $@
 
-$(TARGET): $(SIM_OBJ) $(OBJ_FILES) | $(BIN_DIR)
+$(SIM_EXEC): $(SIM_OBJ) $(OBJ_FILES) | $(BIN_DIR)
 	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
 
 $(SIM_OBJ): $(SIM) | $(BUILD_DIR)
+	$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(GEN_EXEC): $(GEN_OBJ) $(OBJ_FILES) | $(BIN_DIR)
+	$(CXX) $(CXXFLAGS) -o $@ $^ $(LDFLAGS)
+
+$(GEN_OBJ): $(GEN) | $(BUILD_DIR)
 	$(CXX) $(CXXFLAGS) -c $< -o $@
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp | $(BUILD_DIR)

@@ -492,6 +492,7 @@ void FP::dump_mantissa()
         }
     }
     printf("\n");
+    dump_bits_hex("Mantissa (signed, hex)", this->man, this->int_offset + 1);
 
     printf("Mantissa (unsigned): ");
     offset_t uman_high = this->int_offset - 1;

@@ -13,13 +13,14 @@ public:
     ~FileWriter();
 
     void write_line(std::string &line);
-    void write_as_binary(uint64_t num, uint8_t num_bits);
+    void write_line(const char *line);
+
+    void write_as_binary(uint64_t num, uint8_t num_bits, bool as_line = true);
 
     bool is_open() const;
 
 private:
     std::ofstream file;
-
 };
 
 #endif // __WRITER_H__

@@ -217,5 +217,8 @@ int main(int argc, char *argv[])
         writer.write_as_binary(acc.encode(), acc.size);
     }
 
+    free_vectors(vectors_a);
+    free_vectors(vectors_b);
+
     std::cout << "\nDone!\n" << std::endl;
 }
