@@ -126,12 +126,12 @@ int main(int argc, char *argv[])
         ("output-file",             po::value<std::string>()->required(),                               "Output filename")
         ("num-vectors",             po::value<uint32_t>()->default_value(DEFAULT_NUM_VECTORS),          "Number of vectors to test")
         ("vector-size",             po::value<uint32_t>()->default_value(DEFAULT_VECTOR_SIZE),          "Size of the input vectors")
-        ("add-pad-width",           po::value<uint32_t>()->default_value(DEFAULT_ADD_PAD_WIDTH),        "Padding width for addition")
-        ("adder-tree-pad-width",    po::value<uint32_t>()->default_value(DEFAULT_ADDER_TREE_PAD_WIDTH), "Padding width for the adder tree")
         ("input-exp-width",         po::value<uint32_t>()->default_value(DEFAULT_INPUT_EXP_WIDTH),      "Exponent width of the input vectors")
         ("input-man-width",         po::value<uint32_t>()->default_value(DEFAULT_INPUT_MAN_WIDTH),      "Mantissa width of the input vectors")
         ("result-exp-width",        po::value<uint32_t>()->default_value(DEFAULT_RESULT_EXP_WIDTH),     "Exponent width of the result")
-        ("result-man-width",        po::value<uint32_t>()->default_value(DEFAULT_RESULT_MAN_WIDTH),     "Mantissa width of the result");
+        ("result-man-width",        po::value<uint32_t>()->default_value(DEFAULT_RESULT_MAN_WIDTH),     "Mantissa width of the result")
+        ("add-pad-width",           po::value<uint32_t>()->default_value(DEFAULT_ADD_PAD_WIDTH),        "Padding width for addition")
+        ("adder-tree-pad-width",    po::value<uint32_t>()->default_value(DEFAULT_ADDER_TREE_PAD_WIDTH), "Padding width for the adder tree");
     po::variables_map vm;
 
     try

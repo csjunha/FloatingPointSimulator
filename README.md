@@ -1,8 +1,37 @@
 # Bit-accurate FP inner product simulator
 
-This is a bit-accurate floating-point inner product simulator.
+Bit-accurate floating-point inner product simulator for testing and verification of floating-point inner product implementations.
 
 ## Constraints
 
 - Only the same precision is supported for both operands.
 - Currently, double precision is not supported.
+
+## Prerequisites
+
+- **Boost C++ Library**: Make sure the path to the library is correctly set in the Makefile.
+
+## Build
+
+To build the simulator, run the following command at `src/`:
+
+```bash
+make
+```
+
+## Run
+
+### Run simulator
+
+To run the simulator, execute the following command at root:
+
+```bash
+./src/bin/sim --input-files <input_files> --output-file <output_file> --num-vectors <num_vectors> --vector-size <vector_size> --input-exp-width <input_exp_width> --input-man-width <input_man_width> --result-exp-width <result_exp_width> --result-man-width <result_man_width> --add-pad-width <add_pad_width> --adder-tree-pad-width <adder_tree_pad_width>
+```
+
+- `<input_files>`: Whitespace-separated list of input file paths. (e.g., `input1.dat input2.dat`)
+- `<output_file>`: Output file paths.
+
+### Run generator
+
+TBD
